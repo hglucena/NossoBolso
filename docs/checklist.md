@@ -56,22 +56,22 @@
 - [x] Atualizar DEVLOG.md com bugs encontrados pelos testes
 
 ## Prompt 7 — Frontend React
-- [ ] Serviço `frontend` no docker-compose
-- [ ] Cliente de API com gerenciamento de token
-- [ ] Telas de cadastro e login
-- [ ] Painel Membro: saldo, receitas/despesas por categoria, orçamento pessoal
-- [ ] Painel Gestor: orçamento do grupo, gasto por categoria, "quem deve a quem"
-- [ ] Visão Administrador: gestão de usuários e categorias padrão
-- [ ] Gráficos Recharts (pizza + barra)
-- [ ] Roteamento que mostra a visão correta conforme o usuário logado
+- [x] Serviço `frontend` no docker-compose
+- [x] Cliente de API com gerenciamento de token
+- [x] Telas de cadastro e login
+- [x] Painel Membro: saldo, receitas/despesas por categoria, orçamento pessoal
+- [x] Painel Gestor: orçamento do grupo, gasto por categoria, "quem deve a quem"
+- [x] Visão Administrador: gestão de usuários e categorias padrão
+- [x] Gráficos Recharts (pizza + barra)
+- [x] Roteamento que mostra a visão correta conforme o usuário logado
 
 ## Prompt 8 — Empacotamento para entrega
-- [ ] Dockerfile para backend
-- [ ] Dockerfile para frontend (build + servir)
-- [ ] docker-compose com `db` + `backend` + `frontend`
-- [ ] Comando `seed_demo` (dados de demonstração)
-- [ ] README.md completo (projeto, como subir, superusuário, testes, demo)
-- [ ] `docker compose up` sobe tudo do zero
+- [x] Dockerfile para backend (CMD com migrate + runserver)
+- [x] Dockerfile para frontend (multi-stage: node build + nginx serve)
+- [x] docker-compose com `db` + `backend` + `frontend`
+- [x] Comando `seed_demo` (dados de demonstração)
+- [x] README.md completo (projeto, como subir, superusuário, testes, demo)
+- [x] `docker compose up` sobe tudo do zero
 
 ## Evolução (pós-MVP)
 
