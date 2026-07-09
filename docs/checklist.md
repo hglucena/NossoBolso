@@ -1,6 +1,7 @@
 # Checklist — Versão 1 (MVP: Membro, Gestor, Administrador)
 
 ## Prompt 0 — Contexto, arquitetura e documentação inicial
+- [x] Criar docs/plano.md
 - [x] Criar DEEPSEEK.md
 - [x] Criar docs/arquitetura.md
 - [x] Criar docs/checklist.md
