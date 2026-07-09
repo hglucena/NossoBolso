@@ -1,5 +1,8 @@
+from collections import defaultdict
+from decimal import Decimal
+
 from django.db import connections
-from django.db.models import Q
+from django.db.models import Q, Sum
 from django.http import JsonResponse
 from rest_framework import viewsets, generics, permissions, status
 from rest_framework.authtoken.models import Token
@@ -174,7 +177,6 @@ class GrupoViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=["get"])
     def saldo(self, request, pk=None):
         grupo = self.get_object()
-        membros = MembroGrupo.objects.filter(grupo=grupo).values_list("usuario_id", flat=True)
         transacoes = Transacao.objects.filter(grupo=grupo)
         total_receitas = sum(t.valor for t in transacoes if t.tipo == "receita")
         total_despesas = sum(t.valor for t in transacoes if t.tipo == "despesa")
@@ -183,7 +185,67 @@ class GrupoViewSet(viewsets.ModelViewSet):
             "total_receitas": total_receitas,
             "total_despesas": total_despesas,
             "saldo": total_receitas - total_despesas,
-            "quantidade_membros": membros.count(),
+            "quantidade_membros": MembroGrupo.objects.filter(grupo=grupo).count(),
+        })
+
+    @action(detail=True, methods=["get"])
+    def quem_deve_a_quem(self, request, pk=None):
+        grupo = self.get_object()
+        membros = MembroGrupo.objects.filter(grupo=grupo).select_related("usuario")
+        transacoes = Transacao.objects.filter(grupo=grupo).prefetch_related("divisoes")
+
+        balances = defaultdict(Decimal)
+        for m in membros:
+            balances[m.usuario_id] = Decimal("0")
+
+        for t in transacoes:
+            balances[t.usuario_id] += t.valor
+            for div in t.divisoes.all():
+                balances[div.participante_id] -= div.valor_devido
+
+        resultado = []
+        for m in membros:
+            saldo_liquido = balances[m.usuario_id]
+            if saldo_liquido > 0:
+                status = "a_receber"
+            elif saldo_liquido < 0:
+                status = "deve"
+            else:
+                status = "quitado"
+            resultado.append({
+                "usuario_id": m.usuario_id,
+                "nome": m.usuario.nome,
+                "papel": m.papel_no_grupo,
+                "saldo": float(round(saldo_liquido, 2)),
+                "status": status,
+            })
+
+        return Response({
+            "grupo": grupo.nome,
+            "membros": resultado,
+        })
+
+    @action(detail=True, methods=["get"])
+    def orcamento_resumo(self, request, pk=None):
+        grupo = self.get_object()
+        orcamentos = Orcamento.objects.filter(grupo=grupo).select_related("categoria")
+
+        resumo = []
+        for orc in orcamentos:
+            realizado = Transacao.objects.filter(
+                grupo=grupo, categoria=orc.categoria, tipo="despesa",
+            ).aggregate(total=Sum("valor"))["total"] or 0
+            resumo.append({
+                "categoria": orc.categoria.nome,
+                "periodo": str(orc.periodo),
+                "previsto": float(orc.valor_limite),
+                "realizado": float(realizado),
+                "diferenca": float(orc.valor_limite - realizado),
+            })
+
+        return Response({
+            "grupo": grupo.nome,
+            "orcamentos": resumo,
         })
 
 

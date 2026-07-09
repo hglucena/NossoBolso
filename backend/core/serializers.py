@@ -96,7 +96,7 @@ class DivisaoDespesaSerializer(serializers.ModelSerializer):
     class Meta:
         model = DivisaoDespesa
         fields = ["id", "transacao", "participante", "nome_participante", "valor_devido", "pago"]
-        read_only_fields = ["id", "nome_participante"]
+        read_only_fields = ["id", "transacao", "nome_participante"]
 
 
 class TransacaoSerializer(serializers.ModelSerializer):
@@ -115,17 +115,31 @@ class TransacaoSerializer(serializers.ModelSerializer):
 
 class TransacaoCreateSerializer(serializers.ModelSerializer):
     divisoes = DivisaoDespesaSerializer(many=True, required=False)
+    dividir_igualmente = serializers.BooleanField(default=False, write_only=True)
+    participantes_ids = serializers.ListField(
+        child=serializers.IntegerField(), required=False, write_only=True
+    )
 
     class Meta:
         model = Transacao
-        fields = ["id", "conta", "categoria", "tipo", "valor", "descricao", "data", "grupo", "fixa", "divisoes"]
+        fields = [
+            "id", "conta", "categoria", "tipo", "valor", "descricao",
+            "data", "grupo", "fixa", "divisoes", "dividir_igualmente", "participantes_ids",
+        ]
         read_only_fields = ["id"]
 
     def validate(self, data):
         divisoes = self.initial_data.get("divisoes", [])
-        if divisoes:
+        dividir = self.initial_data.get("dividir_igualmente", False)
+        participantes = self.initial_data.get("participantes_ids", [])
+        valor = float(data.get("valor", 0))
+
+        if dividir and participantes:
+            if len(participantes) == 0:
+                raise serializers.ValidationError("Informe ao menos um participante para a divisão.")
+        elif divisoes:
             total_divisoes = sum(float(d.get("valor_devido", 0)) for d in divisoes)
-            if abs(total_divisoes - float(data.get("valor", 0))) > 0.01:
+            if abs(total_divisoes - valor) > 0.01:
                 raise serializers.ValidationError(
                     "A soma das partes da divisão deve ser igual ao valor total da transação."
                 )
@@ -133,14 +147,33 @@ class TransacaoCreateSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         divisoes_data = self.initial_data.get("divisoes", [])
+        dividir = self.initial_data.get("dividir_igualmente", False)
+        participantes_ids = self.initial_data.get("participantes_ids", [])
+
         validated_data.pop("divisoes", None)
+        validated_data.pop("dividir_igualmente", None)
+        validated_data.pop("participantes_ids", None)
+
         transacao = Transacao.objects.create(**validated_data)
-        for div in divisoes_data:
-            DivisaoDespesa.objects.create(
-                transacao=transacao,
-                participante_id=div["participante"],
-                valor_devido=div["valor_devido"],
-            )
+
+        if dividir and participantes_ids:
+            valor = float(transacao.valor)
+            parte = round(valor / len(participantes_ids), 2)
+            ajuste = round(valor - parte * len(participantes_ids), 2)
+            for i, pid in enumerate(participantes_ids):
+                valor_final = parte + (ajuste if i == 0 else 0)
+                DivisaoDespesa.objects.create(
+                    transacao=transacao,
+                    participante_id=pid,
+                    valor_devido=valor_final,
+                )
+        else:
+            for div in divisoes_data:
+                DivisaoDespesa.objects.create(
+                    transacao=transacao,
+                    participante_id=div["participante"],
+                    valor_devido=div["valor_devido"],
+                )
         return transacao
 
 
