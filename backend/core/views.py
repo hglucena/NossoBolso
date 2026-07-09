@@ -5,6 +5,7 @@ from rest_framework import viewsets, generics, permissions, status
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.decorators import action
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 
 from core.models import (
@@ -19,7 +20,6 @@ from core.models import (
 )
 from core.permissions import (
     IsAdminOnly,
-    IsAdminOuReadOnly,
     IsGestorDoGrupoByKwarg,
     IsOwner,
     IsOwnerOrGestorForWrite,
@@ -118,11 +118,14 @@ class ContaViewSet(viewsets.ModelViewSet):
 # ══════════════════════════════════════════════════════════════════════════
 
 class CategoriaViewSet(viewsets.ModelViewSet):
-    permission_classes = [permissions.IsAuthenticated, NaoAdmin]
+    permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
+        user = self.request.user
+        if user.papel_sistema == "admin":
+            return Categoria.objects.filter(usuario__isnull=True)
         return Categoria.objects.filter(
-            Q(usuario=self.request.user) | Q(padrao=True)
+            Q(usuario=user) | Q(padrao=True)
         )
 
     def get_serializer_class(self):
@@ -130,8 +133,18 @@ class CategoriaViewSet(viewsets.ModelViewSet):
             return CategoriaAdminSerializer
         return CategoriaSerializer
 
+    def get_permissions(self):
+        if self.action in ("update", "partial_update", "destroy"):
+            if self.request.user.papel_sistema == "admin":
+                return [permissions.IsAuthenticated(), IsAdminOnly()]
+            return [permissions.IsAuthenticated(), NaoAdmin(), IsOwner()]
+        return [permissions.IsAuthenticated()]
+
     def perform_create(self, serializer):
-        serializer.save(usuario=self.request.user)
+        if self.request.user.papel_sistema == "admin":
+            serializer.save(usuario=None, padrao=True)
+        else:
+            serializer.save(usuario=self.request.user)
 
 
 # ══════════════════════════════════════════════════════════════════════════
@@ -144,6 +157,11 @@ class GrupoViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return Grupo.objects.filter(membros__usuario=self.request.user).distinct()
+
+    def get_permissions(self):
+        if self.action in ("update", "partial_update", "destroy"):
+            return [permissions.IsAuthenticated(), NaoAdmin(), IsOwnerOrReadOnly()]
+        return [permissions.IsAuthenticated(), NaoAdmin()]
 
     def perform_create(self, serializer):
         grupo = serializer.save(responsavel=self.request.user)
@@ -233,7 +251,12 @@ class OrcamentoViewSet(viewsets.ModelViewSet):
         return [permissions.IsAuthenticated(), NaoAdmin()]
 
     def perform_create(self, serializer):
-        if serializer.validated_data.get("grupo"):
+        grupo = serializer.validated_data.get("grupo")
+        if grupo:
+            if not MembroGrupo.objects.filter(
+                grupo=grupo, usuario=self.request.user, papel_no_grupo="responsavel"
+            ).exists():
+                raise PermissionDenied("Apenas o responsável do grupo pode criar orçamentos para o grupo.")
             serializer.save()
         else:
             serializer.save(usuario=self.request.user)

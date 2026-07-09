@@ -85,7 +85,7 @@ class MembroGrupoSerializer(serializers.ModelSerializer):
     class Meta:
         model = MembroGrupo
         fields = ["id", "grupo", "usuario", "nome_usuario", "email_usuario", "papel_no_grupo", "data_entrada"]
-        read_only_fields = ["id", "nome_usuario", "email_usuario", "data_entrada"]
+        read_only_fields = ["id", "grupo", "nome_usuario", "email_usuario", "data_entrada"]
 
 
 # ─── Transação ─────────────────────────────────────────────────────────
