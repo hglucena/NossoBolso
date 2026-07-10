@@ -74,22 +74,23 @@ export default function PainelConsultor() {
 
   return (
     <div>
-      <h2 className="text-xl font-bold mb-2">Painel do Consultor — {user?.nome}</h2>
+      <div className="mb-5">
+        <h2 className="text-2xl font-bold text-slate-800">Consultoria 🤝</h2>
+        <p className="text-sm text-slate-400">Sua carteira de clientes, em modo leitura.</p>
+      </div>
       {msg && (
-        <div className={`p-2 rounded text-sm mb-3 ${msg.includes("Erro") ? "bg-red-100 text-red-800" : "bg-green-100 text-green-800"}`}>
-          {msg}
+        <div className={msg.includes("Erro") ? "banner-erro" : "banner-ok"}>
+          <span className="flex-1">{msg}</span>
+          <button onClick={() => setMsg("")} className="font-bold px-1 opacity-60 hover:opacity-100">×</button>
         </div>
       )}
 
-      <div className="flex gap-2 mb-4 border-b">
-        <button onClick={() => setClienteSel(null)}
-          className={`px-4 py-2 text-sm font-medium rounded-t-lg ${!clienteSel ? "bg-white border border-b-white -mb-px text-indigo-600" : "text-gray-500"}`}>
+      <div className="tabs">
+        <button onClick={() => setClienteSel(null)} className={!clienteSel ? "tab-active" : "tab"}>
           Meus Clientes
         </button>
         {clienteSel && (
-          <button className="px-4 py-2 text-sm font-medium rounded-t-lg bg-white border border-b-white -mb-px text-indigo-600">
-            Detalhes do Cliente
-          </button>
+          <button className="tab-active">Detalhes do Cliente</button>
         )}
       </div>
 
@@ -97,22 +98,29 @@ export default function PainelConsultor() {
         <div>
           <div className="flex gap-2 mb-3">
             <button onClick={() => { setForm({ consultor: "", nivel: "leitura" }); setModalTipo("autorizacao"); setModalOpen(true); }}
-              className="bg-indigo-600 text-white px-3 py-1.5 rounded text-sm hover:bg-indigo-700">
+              className="btn-primary">
               + Autorizar Consultor
             </button>
           </div>
           {clientes.length === 0 ? (
-            <p className="text-gray-400">Nenhum cliente autorizado ainda.</p>
+            <div className="card p-10 text-center">
+              <p className="text-4xl mb-2">🤝</p>
+              <p className="text-slate-400">Nenhum cliente autorizado ainda.</p>
+              <p className="text-xs text-slate-400 mt-1">Peça para o cliente autorizar você pelo e-mail na aba "Consultores" do painel dele.</p>
+            </div>
           ) : (
-            <div className="grid gap-3">
+            <div className="grid sm:grid-cols-2 gap-4">
               {clientes.map(c => (
-                <div key={c.id} className="bg-white rounded-lg shadow p-4 flex justify-between items-center cursor-pointer hover:shadow-md"
+                <div key={c.id} className="card-hover p-5 flex items-center gap-4"
                   onClick={() => carregarCliente(c.id)}>
-                  <div>
-                    <h4 className="font-semibold">{c.nome}</h4>
-                    <p className="text-sm text-gray-500">{c.email}</p>
+                  <span className="grid place-items-center w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-violet-500 text-white text-sm font-bold shrink-0 shadow-md shadow-indigo-500/25">
+                    {(c.nome || "?").split(" ").filter(Boolean).slice(0, 2).map(p => p[0].toUpperCase()).join("")}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <h4 className="font-semibold text-slate-800 truncate">{c.nome}</h4>
+                    <p className="text-sm text-slate-400 truncate">{c.email}</p>
                   </div>
-                  <span className="text-xs text-indigo-600">Ver finanças →</span>
+                  <span className="text-xs font-medium text-indigo-600 shrink-0">Ver finanças →</span>
                 </div>
               ))}
             </div>
@@ -122,25 +130,25 @@ export default function PainelConsultor() {
 
       {clienteSel && (
         <div>
-          <div className="flex gap-3 mb-4 border-b pb-2">
+          <div className="flex flex-wrap gap-1.5 mb-5">
             {["transacoes", "contas", "recomendacoes"].map(k => (
               <button key={k} onClick={() => setClienteSel(c => c ? { ...c, aba: k } : null)}
-                className={`text-sm px-3 py-1 rounded ${(clienteSel.aba || "transacoes") === k ? "bg-indigo-100 text-indigo-700 font-medium" : "text-gray-500"}`}>
+                className={`text-sm px-3.5 py-1.5 rounded-xl font-medium transition-all ${(clienteSel.aba || "transacoes") === k ? "bg-indigo-100 text-indigo-700 shadow-sm" : "text-slate-500 hover:bg-white hover:text-slate-800"}`}>
                 {k === "transacoes" ? "Transações" : k === "contas" ? "Contas" : "Recomendações"}
               </button>
             ))}
           </div>
 
           {(clienteSel.aba || "transacoes") === "transacoes" && (
-            <div className="bg-white rounded-lg shadow overflow-x-auto">
+            <div className="card overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-gray-50"><tr><th className="p-3">Descrição</th><th className="p-3">Valor</th><th className="p-3">Tipo</th><th className="p-3">Data</th></tr></thead>
+                <thead><tr><th className="p-3">Descrição</th><th className="p-3">Valor</th><th className="p-3">Tipo</th><th className="p-3">Data</th></tr></thead>
                 <tbody>
                   {transacoes.map(t => (
-                    <tr key={t.id} className="border-t">
+                    <tr key={t.id}>
                       <td className="p-3">{t.descricao || t.tipo}</td>
-                      <td className={`p-3 font-medium ${t.tipo === "despesa" ? "text-red-600" : "text-green-600"}`}>{formatMoney(t.valor)}</td>
-                      <td className="p-3 capitalize">{t.tipo}</td>
+                      <td className={`p-3 font-semibold tnum ${t.tipo === "despesa" ? "text-red-600" : "text-emerald-600"}`}>{formatMoney(t.valor)}</td>
+                      <td className="p-3">{t.tipo === "despesa" ? <span className="badge-red">Despesa</span> : <span className="badge-green">Receita</span>}</td>
                       <td className="p-3">{new Date(t.data).toLocaleDateString("pt-BR")}</td>
                     </tr>
                   ))}
@@ -151,12 +159,12 @@ export default function PainelConsultor() {
           )}
 
           {(clienteSel.aba || "transacoes") === "contas" && (
-            <div className="bg-white rounded-lg shadow overflow-x-auto">
+            <div className="card overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-gray-50"><tr><th className="p-3">Nome</th><th className="p-3">Saldo Inicial</th><th className="p-3">Ativa</th></tr></thead>
+                <thead><tr><th className="p-3">Nome</th><th className="p-3">Saldo Inicial</th><th className="p-3">Ativa</th></tr></thead>
                 <tbody>
                   {contas.map(c => (
-                    <tr key={c.id} className="border-t"><td className="p-3 font-medium">{c.nome}</td><td className="p-3">{formatMoney(c.saldo_inicial)}</td><td className="p-3">{c.ativa ? "Sim" : "Não"}</td></tr>
+                    <tr key={c.id}><td className="p-3 font-medium">{c.nome}</td><td className="p-3">{formatMoney(c.saldo_inicial)}</td><td className="p-3">{c.ativa ? "Sim" : "Não"}</td></tr>
                   ))}
                   {contas.length === 0 && <tr><td colSpan={3} className="p-3 text-gray-400 text-center">Nenhuma conta</td></tr>}
                 </tbody>
@@ -167,15 +175,15 @@ export default function PainelConsultor() {
           {(clienteSel.aba || "transacoes") === "recomendacoes" && (
             <div>
               <button onClick={() => { setForm({ texto: "" }); setModalTipo("recomendacao"); setModalOpen(true); }}
-                className="bg-indigo-600 text-white px-3 py-1.5 rounded text-sm hover:bg-indigo-700 mb-3">
+                className="btn-primary mb-3">
                 + Nova Recomendação
               </button>
-              <div className="bg-white rounded-lg shadow overflow-x-auto">
+              <div className="card overflow-x-auto">
                 <table className="w-full text-sm">
-                  <thead className="bg-gray-50"><tr><th className="p-3">Texto</th><th className="p-3">Data</th></tr></thead>
+                  <thead><tr><th className="p-3">Texto</th><th className="p-3">Data</th></tr></thead>
                   <tbody>
                     {recomendacoes.map(r => (
-                      <tr key={r.id} className="border-t"><td className="p-3">{r.texto}</td><td className="p-3">{new Date(r.data).toLocaleDateString("pt-BR")}</td></tr>
+                      <tr key={r.id}><td className="p-3">{r.texto}</td><td className="p-3">{new Date(r.data).toLocaleDateString("pt-BR")}</td></tr>
                     ))}
                     {recomendacoes.length === 0 && <tr><td colSpan={2} className="p-3 text-gray-400 text-center">Nenhuma recomendação</td></tr>}
                   </tbody>
@@ -189,21 +197,21 @@ export default function PainelConsultor() {
       <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={modalTipo === "recomendacao" ? "Nova Recomendação" : "Autorizar Consultor"}>
         {modalTipo === "recomendacao" && (
           <div className="space-y-3">
-            <textarea className="w-full border rounded px-3 py-2 text-sm" rows={4} placeholder="Texto da recomendação..." value={form.texto || ""}
+            <textarea className="input" rows={4} placeholder="Texto da recomendação..." value={form.texto || ""}
               onChange={e => setForm({ ...form, texto: e.target.value })} />
-            <button onClick={criarRecomendacao} className="w-full bg-indigo-600 text-white rounded-lg py-2 text-sm hover:bg-indigo-700">Enviar</button>
+            <button onClick={criarRecomendacao} className="btn-primary w-full">Enviar</button>
           </div>
         )}
         {modalTipo === "autorizacao" && (
           <div className="space-y-3">
-            <input className="w-full border rounded px-3 py-2 text-sm" type="number" placeholder="ID do consultor" value={form.consultor || ""}
+            <input className="input" type="number" placeholder="ID do consultor" value={form.consultor || ""}
               onChange={e => setForm({ ...form, consultor: e.target.value })} />
-            <select className="w-full border rounded px-3 py-2 text-sm" value={form.nivel || "leitura"}
+            <select className="input" value={form.nivel || "leitura"}
               onChange={e => setForm({ ...form, nivel: e.target.value })}>
               <option value="leitura">Leitura</option>
               <option value="comentar">Comentar</option>
             </select>
-            <button onClick={criarAutorizacao} className="w-full bg-indigo-600 text-white rounded-lg py-2 text-sm hover:bg-indigo-700">Autorizar</button>
+            <button onClick={criarAutorizacao} className="btn-primary w-full">Autorizar</button>
           </div>
         )}
       </Modal>

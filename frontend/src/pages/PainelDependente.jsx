@@ -88,63 +88,73 @@ export default function PainelDependente() {
 
   return (
     <div>
-      <h2 className="text-xl font-bold mb-4">Minha Mesada — {user?.nome}</h2>
+      <div className="mb-5">
+        <h2 className="text-2xl font-bold text-slate-800">Minha Mesada 🐷</h2>
+        <p className="text-sm text-slate-400">Acompanhe seu saldo, registre gastos e junte para o que você quer.</p>
+      </div>
 
       {msg && (
-        <div className={`p-2 rounded text-sm mb-3 ${msg.includes("Erro") || msg.includes("limite") || msg.includes("Gasto acima") ? "bg-red-100 text-red-800" : "bg-green-100 text-green-800"}`}>
-          {msg}
+        <div className={msg.includes("Erro") || msg.includes("limite") || msg.includes("acima") ? "banner-erro" : "banner-ok"}>
+          <span className="flex-1">{msg}</span>
+          <button onClick={() => setMsg("")} className="font-bold px-1 opacity-60 hover:opacity-100">×</button>
         </div>
       )}
 
       {mesada ? (
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 via-indigo-600 to-violet-600 text-white shadow-xl shadow-indigo-600/25 p-6 md:p-8 mb-8">
+          <div className="absolute -top-16 -right-16 w-56 h-56 rounded-full bg-white/10 blur-2xl" />
+          <div className="absolute -bottom-20 -left-10 w-48 h-48 rounded-full bg-violet-300/20 blur-2xl" />
+          <div className="relative flex flex-wrap items-end justify-between gap-6">
             <div>
-              <p className="text-sm text-gray-500">Grupo</p>
-              <p className="font-semibold">{mesada.nome_grupo}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Valor da Mesada</p>
-              <p className="font-semibold text-indigo-600">{formatMoney(mesada.valor)}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Saldo Disponível</p>
-              <p className={`font-bold text-lg ${Number(mesada.saldo_atual) > 0 ? "text-green-600" : "text-red-600"}`}>
+              <p className="text-indigo-200 text-sm font-medium">Saldo disponível · {mesada.nome_grupo}</p>
+              <p className={`text-4xl md:text-5xl font-extrabold tnum mt-1 ${Number(mesada.saldo_atual) <= 0 ? "text-red-200" : ""}`}>
                 {formatMoney(mesada.saldo_atual)}
               </p>
+              <p className="text-indigo-200 text-xs mt-2">
+                Mesada de <span className="font-semibold text-white">{formatMoney(mesada.valor)}</span> · recarga {mesada.periodo_recarga}
+                {mesada.ultima_recarga && (() => {
+                  const dias = { semanal: 7, quinzenal: 15, mensal: 30 }[mesada.periodo_recarga] || 30;
+                  const proxima = new Date(new Date(mesada.ultima_recarga).getTime() + dias * 86400000);
+                  return <> · próxima em <span className="font-semibold text-white">{proxima.toLocaleDateString("pt-BR")}</span></>;
+                })()}
+              </p>
             </div>
-            <div>
-              <p className="text-sm text-gray-500">Recarga</p>
-              <p className="font-semibold capitalize">{mesada.periodo_recarga}</p>
-              {mesada.ultima_recarga && (() => {
-                const dias = { semanal: 7, quinzenal: 15, mensal: 30 }[mesada.periodo_recarga] || 30;
-                const proxima = new Date(new Date(mesada.ultima_recarga).getTime() + dias * 86400000);
-                return <p className="text-xs text-gray-400">próxima em {proxima.toLocaleDateString("pt-BR")}</p>;
-              })()}
+            <div className="w-full md:w-64">
+              <div className="flex justify-between text-[11px] text-indigo-200 mb-1">
+                <span>Quanto ainda tenho</span>
+                <span className="tnum">{Math.max(0, Math.min(100, Math.round(Number(mesada.saldo_atual) / Number(mesada.valor) * 100)))}%</span>
+              </div>
+              <div className="w-full bg-white/20 rounded-full h-2.5 overflow-hidden">
+                <div className="h-full rounded-full bg-white transition-[width] duration-700 ease-out"
+                  style={{ width: `${Math.max(0, Math.min(100, Number(mesada.saldo_atual) / Number(mesada.valor) * 100))}%` }} />
+              </div>
             </div>
           </div>
         </div>
       ) : (
-        <p className="text-gray-400 mb-6">Nenhuma mesada configurada para você.</p>
+        <div className="card p-10 text-center mb-8">
+          <p className="text-4xl mb-2">🐷</p>
+          <p className="text-slate-400">Nenhuma mesada configurada para você ainda.</p>
+        </div>
       )}
 
       <div className="grid md:grid-cols-2 gap-6">
         <div>
           <h3 className="font-semibold mb-3">Novo Gasto</h3>
-          <form onSubmit={criarTransacao} className="bg-white rounded-lg shadow p-4 space-y-3">
-            <select className="w-full border rounded px-3 py-2 text-sm" value={form.conta} onChange={e => setForm({ ...form, conta: e.target.value })} required>
+          <form onSubmit={criarTransacao} className="card p-4 space-y-3">
+            <select className="input" value={form.conta} onChange={e => setForm({ ...form, conta: e.target.value })} required>
               <option value="">Conta</option>
               {contas.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
             </select>
-            <select className="w-full border rounded px-3 py-2 text-sm" value={form.categoria} onChange={e => setForm({ ...form, categoria: e.target.value })} required>
+            <select className="input" value={form.categoria} onChange={e => setForm({ ...form, categoria: e.target.value })} required>
               <option value="">Categoria</option>
               {categorias.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
             </select>
-            <input className="w-full border rounded px-3 py-2 text-sm" type="number" step="0.01" placeholder="Valor (R$)" value={form.valor}
+            <input className="input" type="number" step="0.01" placeholder="Valor (R$)" value={form.valor}
               onChange={e => setForm({ ...form, valor: e.target.value })} required />
-            <input className="w-full border rounded px-3 py-2 text-sm" placeholder="Descrição" value={form.descricao}
+            <input className="input" placeholder="Descrição" value={form.descricao}
               onChange={e => setForm({ ...form, descricao: e.target.value })} />
-            <button type="submit" className="w-full bg-indigo-600 text-white rounded-lg py-2 text-sm hover:bg-indigo-700">
+            <button type="submit" className="btn-primary w-full">
               Registrar Gasto
             </button>
           </form>
@@ -152,12 +162,12 @@ export default function PainelDependente() {
 
         <div>
           <h3 className="font-semibold mb-3">Meus Gastos</h3>
-          <div className="bg-white rounded-lg shadow overflow-x-auto">
+          <div className="card overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-gray-50"><tr><th className="p-3">Descrição</th><th className="p-3">Valor</th><th className="p-3">Data</th></tr></thead>
+              <thead><tr><th className="p-3">Descrição</th><th className="p-3">Valor</th><th className="p-3">Data</th></tr></thead>
               <tbody>
                 {transacoes.filter(t => t.tipo === "despesa").map(t => (
-                  <tr key={t.id} className="border-t">
+                  <tr key={t.id}>
                     <td className="p-3">{t.descricao || "Gasto"}</td>
                     <td className="p-3 text-red-600 font-medium">{formatMoney(t.valor)}</td>
                     <td className="p-3">{new Date(t.data).toLocaleDateString("pt-BR")}</td>
@@ -173,32 +183,36 @@ export default function PainelDependente() {
       </div>
 
       {/* Metas do dependente */}
-      <div className="mt-6">
-        <h3 className="font-semibold mb-3">Minhas Metas</h3>
+      <div className="mt-8">
+        <h3 className="font-semibold text-slate-800 mb-3">Minhas Metas 🎯</h3>
         <div className="grid md:grid-cols-2 gap-4">
           {metas.map(m => (
-            <div key={m.id} className="bg-white rounded-lg shadow p-4">
-              <h4 className="font-semibold mb-1">
-                {m.nome} {m.concluida && <span className="text-green-600 text-xs ml-1">✓ consegui!</span>}
-              </h4>
-              <p className="text-sm text-gray-500 mb-2">{formatMoney(m.valor_atual)} de {formatMoney(m.valor_alvo)}</p>
-              <div className="w-full bg-gray-200 rounded-full h-2.5 mb-3">
-                <div className={`h-2.5 rounded-full ${m.concluida ? "bg-green-500" : "bg-indigo-600"}`} style={{ width: `${m.percentual}%` }} />
+            <div key={m.id} className="card p-5">
+              <div className="flex items-center justify-between mb-1">
+                <h4 className="font-semibold text-slate-800">{m.nome}</h4>
+                {m.concluida && <span className="badge-green">✓ consegui!</span>}
               </div>
-              {!m.concluida && (
-                <button onClick={() => guardarNaMeta(m)} className="bg-indigo-600 text-white px-3 py-1 rounded text-xs hover:bg-indigo-700">
-                  + Guardar da mesada
-                </button>
-              )}
+              <p className="text-sm text-slate-400 mb-2 tnum">{formatMoney(m.valor_atual)} de {formatMoney(m.valor_alvo)}</p>
+              <div className="progress-track mb-3">
+                <div className={`progress-fill ${m.concluida ? "bg-emerald-500" : "bg-gradient-to-r from-indigo-500 to-violet-500"}`} style={{ width: `${m.percentual}%` }} />
+              </div>
+              <div className="flex items-center justify-between">
+                {!m.concluida ? (
+                  <button onClick={() => guardarNaMeta(m)} className="btn-primary text-xs px-3 py-1.5">
+                    + Guardar da mesada
+                  </button>
+                ) : <span className="text-2xl">🎉</span>}
+                <span className="text-xs font-semibold text-slate-400 tnum">{m.percentual}%</span>
+              </div>
             </div>
           ))}
-          <form onSubmit={criarMeta} className="bg-white rounded-lg shadow p-4 border-2 border-dashed border-indigo-200 space-y-2">
-            <p className="text-sm font-medium text-gray-600">Nova meta (ex.: PS5, bicicleta...)</p>
-            <input className="w-full border rounded px-3 py-2 text-sm" placeholder="O que você quer comprar?" value={formMeta.nome}
+          <form onSubmit={criarMeta} className="rounded-2xl p-5 border-2 border-dashed border-indigo-200 bg-indigo-50/40 space-y-2.5 transition-colors hover:border-indigo-300">
+            <p className="text-sm font-semibold text-slate-600">✨ Nova meta (ex.: PS5, bicicleta...)</p>
+            <input className="input" placeholder="O que você quer comprar?" value={formMeta.nome}
               onChange={e => setFormMeta({ ...formMeta, nome: e.target.value })} required />
-            <input className="w-full border rounded px-3 py-2 text-sm" type="number" step="0.01" min="0.01" placeholder="Quanto custa? (R$)" value={formMeta.valor_alvo}
+            <input className="input" type="number" step="0.01" min="0.01" placeholder="Quanto custa? (R$)" value={formMeta.valor_alvo}
               onChange={e => setFormMeta({ ...formMeta, valor_alvo: e.target.value })} required />
-            <button type="submit" className="w-full bg-indigo-600 text-white rounded-lg py-2 text-sm hover:bg-indigo-700">
+            <button type="submit" className="btn-primary w-full">
               Criar Meta
             </button>
           </form>

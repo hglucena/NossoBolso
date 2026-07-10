@@ -20,22 +20,83 @@ Aplicação CRUD de finanças pessoais e de grupo, com cinco visões de usuário
 | **Consultor** | Carteira de clientes autorizados (modo leitura); cria recomendações (nível comentar) |
 | **Administrador** | Gestão de usuários e categorias padrão; NUNCA acessa finanças alheias |
 
-## Como subir
+## Tutorial: rodando o projeto do zero (passo a passo)
+
+### 0. Pré-requisitos
+
+- **Docker Desktop** instalado e **aberto** (ícone da baleia estável na bandeja) — [download](https://www.docker.com/products/docker-desktop/)
+- **Git** instalado
+
+### 1. Clonar o repositório
 
 ```bash
-# Subir o ambiente completo (db + backend + frontend)
-docker compose up --build
-
-# Em segundo plano
-docker compose up -d --build
-
-# Parar os serviços
-docker compose down
+git clone https://github.com/hglucena/NossoBolso.git
+cd NossoBolso
 ```
 
-- **Frontend:** http://localhost:5173
-- **API do backend:** http://localhost:8000
-- **Django Admin:** http://localhost:8000/admin/
+### 2. Subir o ambiente (banco + API + frontend)
+
+```bash
+docker compose up -d --build
+```
+
+A primeira execução baixa as imagens e compila tudo (2–5 minutos). As seguintes são rápidas.
+O backend roda as migrações do banco automaticamente ao iniciar.
+
+Confira se os três serviços subiram:
+
+```bash
+docker compose ps
+```
+
+Deve aparecer `db` (healthy), `backend` e `frontend` como `Up`.
+
+### 3. Popular com os dados de demonstração
+
+```bash
+docker compose exec backend python manage.py seed_demo
+```
+
+Isso cria um cenário completo: **2 famílias** (Silva e Costa), **1 república** com 3 moradores,
+**2 consultores** com carteiras de clientes, **6 meses de histórico** de transações (para os
+gráficos), mesadas com gastos, contas a pagar, metas de economia e recomendações.
+
+### 4. Acessar
+
+| O quê | Endereço |
+|---|---|
+| **Aplicação** | http://localhost:5173 |
+| API | http://localhost:8000/api/health/ |
+| Django Admin | http://localhost:8000/admin/ |
+
+### 5. Explorar cada visão (senha de todos: `senha123`)
+
+| Faça login como... | Para ver... |
+|---|---|
+| `joao@demo.com` | **Membro + Gestor**: painel completo com saldo, gráfico donut, contas a pagar, metas, consultores; no menu "Grupos", administre a Família Silva (despesas divididas, quem deve a quem, mesada do Pedro) |
+| `pedro@demo.com` | **Dependente**: só a mesada — registre um gasto, tente estourar o saldo (bloqueia!), crie uma meta "PS5" e guarde mesada nela |
+| `carlos@demo.com` | **Consultor**: carteira com 3 clientes em modo leitura; deixe uma recomendação para o João |
+| `maria@demo.com` | **Gestora da república**: 3 moradores dividindo aluguel, compras e internet |
+| `admin@demo.com` (senha `admin123`) | **Admin**: usuários e categorias padrão — repare que ele não vê finanças de ninguém |
+
+### 6. Parar / resetar
+
+```bash
+# Parar os serviços (mantém os dados)
+docker compose down
+
+# Resetar TUDO (apaga o banco) e recomeçar
+docker compose down -v
+docker compose up -d --build
+docker compose exec backend python manage.py seed_demo
+```
+
+### Problemas comuns
+
+- **"Impossível fazer login"** → o seed ainda não rodou; execute o passo 3.
+- **Porta 5173 ou 8000 ocupada** → pare o que estiver usando a porta ou edite as portas no `docker-compose.yml`.
+- **Docker não conecta** → o Docker Desktop precisa estar aberto antes do `docker compose up`.
+- **Mudou código do frontend e não apareceu** → `docker compose up -d --build frontend` e recarregue com Ctrl+Shift+R.
 
 ## Dados de demonstração
 

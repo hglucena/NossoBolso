@@ -305,3 +305,34 @@ transações após pagar/aportar/lançar.
 
 **Resultado: 150 testes, 0 falhas** (8 novos: 5 de saldo vivo/pagamento e 3 de metas do
 dependente com mesada).
+
+## Etapa 18: Redesign do frontend
+
+**Prompt (resumo):** "O frontend do projeto tá feio. Faça uma análise suprema no frontend e
+deixe tudo mais legal, bonito e interativo."
+
+**Design system central** (`index.css`, via `@apply` do Tailwind): classes reutilizáveis para
+cartões (`card`, `card-hover`), botões (`btn-primary`, `btn-ghost`, `btn-mini-*`), inputs,
+abas em pílula (`tabs`/`tab`/`tab-active`), badges de status, barras de progresso animadas,
+banners de feedback e animações (fade-up, slide-down, modal-pop). As tabelas são estilizadas
+por herança dentro de `.card` — os JSX ficaram mais enxutos, não mais verbosos.
+
+**Por tela:**
+- **Login/Cadastro**: fundo gradiente com blobs desfocados, cartão glass com logo, animação de entrada
+- **Navbar**: gradiente indigo→violeta, logo com ícone, links em pílula, avatar com iniciais e papel, sticky
+- **Painel Membro**: saudação + 4 stat tiles (saldo total, a pagar em aberto, metas, consultores),
+  abas em pílula, gráfico de pizza → **donut** com total e rótulos diretos
+- **Painel Gestor**: cards de grupo com avatar-letra e hover, "quem deve a quem" com badges
+  (A receber/Deve/Quitado), gráfico de barras com cantos arredondados, legenda e grid recessivo
+- **Painel Dependente**: hero card gradiente com saldo gigante e barra "quanto ainda tenho",
+  metas com 🎉 ao concluir e formulário tracejado de nova meta
+- **Consultor**: carteira em cards com avatar de iniciais; **Admin**: badges de papel/status
+
+**Gráficos seguindo o método dataviz:** paleta categórica CVD-safe em ordem fixa
+(`#2a78d6, #1baf7a, #eda100, ...`), validada com o script do skill contra o fundo branco dos
+cards (todas as checagens passaram; o aviso de contraste é mitigado pelos rótulos diretos e
+pelas tabelas equivalentes). Categorias além de 7 agrupadas em "Outros" (cinza neutro) em vez
+de reciclar cores.
+
+**Bugs/UX corrigidos de brinde:** saldo negativo em vermelho em todos os lugares; mensagens de
+feedback fecháveis e com animação; estados vazios com ícone e call-to-action.
