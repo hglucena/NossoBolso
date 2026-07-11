@@ -48,7 +48,9 @@ export default function Layout() {
               <span className="grid place-items-center w-8 h-8 rounded-xl bg-white/15 text-base shadow-inner">💰</span>
               NossoBolso
             </span>
-            <NavLink to="/painel" end className={linkClass}>Painel</NavLink>
+            {user?.papel_sistema !== "admin" && (
+              <NavLink to="/painel" end className={linkClass}>Painel</NavLink>
+            )}
             {user?.papel_sistema !== "admin" && !temMesada && (
               <NavLink to="/painel/gestor" className={linkClass}>Grupos</NavLink>
             )}

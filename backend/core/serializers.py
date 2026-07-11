@@ -43,10 +43,29 @@ class UsuarioSerializer(serializers.ModelSerializer):
 
 
 class UsuarioAdminSerializer(serializers.ModelSerializer):
+    senha = serializers.CharField(write_only=True, min_length=6, required=False)
+
     class Meta:
         model = Usuario
-        fields = ["id", "email", "nome", "papel_sistema", "is_active", "data_criacao"]
+        fields = ["id", "email", "nome", "papel_sistema", "is_active", "senha", "data_criacao"]
         read_only_fields = ["id", "data_criacao"]
+
+    def validate(self, data):
+        if self.instance is None and not data.get("senha"):
+            raise serializers.ValidationError({"senha": "Informe uma senha para o novo usuário."})
+        return data
+
+    def create(self, validated_data):
+        senha = validated_data.pop("senha")
+        return Usuario.objects.create_user(password=senha, **validated_data)
+
+    def update(self, instance, validated_data):
+        senha = validated_data.pop("senha", None)
+        usuario = super().update(instance, validated_data)
+        if senha:
+            usuario.set_password(senha)
+            usuario.save(update_fields=["password"])
+        return usuario
 
 
 # ─── Conta ─────────────────────────────────────────────────────────────

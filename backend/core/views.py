@@ -120,6 +120,15 @@ class UsuarioViewSet(viewsets.ModelViewSet):
     serializer_class = UsuarioAdminSerializer
     permission_classes = [IsAdminOnly]
 
+    def destroy(self, request, *args, **kwargs):
+        usuario = self.get_object()
+        if usuario == request.user:
+            return Response(
+                {"detail": "Você não pode excluir a sua própria conta de administrador."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        return super().destroy(request, *args, **kwargs)
+
 
 # ══════════════════════════════════════════════════════════════════════════
 # Conta

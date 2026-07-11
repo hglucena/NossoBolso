@@ -178,15 +178,17 @@ class Transacao(models.Model):
         related_name="transacoes",
         verbose_name="usuário",
     )
+    # RESTRICT (e não PROTECT): impede excluir conta/categoria em uso,
+    # mas permite o cascade completo quando o próprio usuário é excluído.
     conta = models.ForeignKey(
         Conta,
-        on_delete=models.PROTECT,
+        on_delete=models.RESTRICT,
         related_name="transacoes",
         verbose_name="conta",
     )
     categoria = models.ForeignKey(
         Categoria,
-        on_delete=models.PROTECT,
+        on_delete=models.RESTRICT,
         related_name="transacoes",
         verbose_name="categoria",
     )
@@ -241,7 +243,7 @@ class Orcamento(models.Model):
     )
     categoria = models.ForeignKey(
         Categoria,
-        on_delete=models.PROTECT,
+        on_delete=models.RESTRICT,
         related_name="orcamentos",
         verbose_name="categoria",
     )
